@@ -532,12 +532,19 @@ int tgz_extract(gzFile in, int cm, int junkPaths, enum KeepMode keep, int iCnt, 
     return -1;
   }
   
+  unsigned nCounter = 0;
   while (1)
   {
 	  if (readBlock(cm, &buffer, &bytesReadThisTime) < 0)
 		  return -1;
 
 	  bytesReadSofar = bytesReadThisTime;
+
+	  // Outputing the progress is slow do it less often..
+	  if (++nCounter % 1024 == 0)
+	  {
+		  PrintProgressionBar(bytesReadSofar, totalSize);
+	  }
 
     /*
      * If we have to get a tar header

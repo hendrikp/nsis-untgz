@@ -103,10 +103,14 @@ void _cdecl PrintMessage(const TCHAR *msg, ...)
 void _cdecl PrintProgressionBar(const _fsize64_t sofar, const _fsize64_t total)
 {
 	int position = 0;
-	int range = g_endRange - g_beginRange;
+	int range = g_endRange - g_beginRange; 
 	int i = 0;
 	int pos = 0;
 	_fsize64_t sofarscaled = 0;
+
+	// this is precise enough 
+	if (range > 300)
+		range = 300;
 
 	// Manual multiplication (no crt routine present for this type)
 	for(i = 1; i <= range; ++i)
@@ -120,6 +124,9 @@ void _cdecl PrintProgressionBar(const _fsize64_t sofar, const _fsize64_t total)
 		sofarscaled -= total;
 		++pos;
 	}
+
+	// scale to real range
+	pos = MulDiv(g_endRange - g_beginRange, pos, range);
 
 	if (total != 0)
 	{
