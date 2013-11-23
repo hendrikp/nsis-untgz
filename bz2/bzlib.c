@@ -113,7 +113,7 @@ int BZ_API(BZ2_bzDecompressInit)
                        int        small )
 {
    DState* s;
-
+   g_totalRead = 0;
    if (!bz_config_ok()) return BZ_CONFIG_ERROR;
 
    if (strm == NULL) return BZ_PARAM_ERROR;
@@ -599,7 +599,8 @@ int BZ_API(BZ2_bzRead)
            ( int*    bzerror, 
              BZFILE* b, 
              void*   buf, 
-             int     len )
+			 int     len,
+			 _fsize64_t* bytesRead)
 {
    Int32   n, ret;
    bzFile* bzf = (bzFile*)b;
@@ -626,9 +627,11 @@ int BZ_API(BZ2_bzRead)
 #endif
 
       if (bzf->strm.avail_in == 0 && !gzeof(bzf->handle)) {
-         n = gzread (bzf->handle, bzf->buf, BZ_MAX_UNUSED*sizeof(UChar));
+         n = gzread (bzf->handle, bzf->buf, BZ_MAX_UNUSED*sizeof(UChar), NULL);
          if (n < 0) /* if (ferror(bzf->handle)) */
             { BZ_SETERR(BZ_IO_ERROR); return 0; };
+		 g_totalRead += n;
+		 *bytesRead = g_totalRead;
          bzf->bufN = n;
          bzf->strm.avail_in = bzf->bufN;
          bzf->strm.next_in = bzf->buf;

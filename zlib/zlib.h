@@ -1105,7 +1105,7 @@ ZEXTERN int ZEXPORT gzsetparams OF((gzFile file, int level, int strategy));
    opened for writing.
 */
 
-ZEXTERN int ZEXPORT    gzread  OF((gzFile file, voidp buf, unsigned len));
+ZEXTERN int ZEXPORT    gzread  OF((gzFile file, voidp buf, unsigned len, _fsize64_t* bytesRead));
 /*
      Reads the given number of uncompressed bytes from the compressed file.
    If the input file was not in gzip format, gzread copies the given number

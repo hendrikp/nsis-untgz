@@ -246,7 +246,7 @@ int getArgList(int *argCnt, TCHAR **argList[], TCHAR *cmdline)
 /* GB Set the limits of the progression for extraction */
 void InitProgressBarExtremities()
 {
-	g_beginRange = SendMessage(g_hwndProgressBar, PBM_GETPOS, 0, 0);
+	g_beginRange = 0; //SendMessage(g_hwndProgressBar, PBM_GETPOS, 0, 0);
 	g_endRange = SendMessage(g_hwndProgressBar, PBM_GETRANGE, 0, 0);
 	g_endRange -= MulDiv(1, g_endRange - g_beginRange, 11); // We left some range to finish the install
 }

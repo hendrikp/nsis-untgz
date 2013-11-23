@@ -138,7 +138,7 @@ BZ_EXTERN int BZ_API(BZ2_bzDecompressEnd) (
 
 /*-- prototypes for our read function --*/
 typedef void * gzFile;
-int gzread(gzFile file, void * buf, unsigned len);
+int gzread(gzFile file, void * buf, unsigned len, _fsize64_t* bytesRead);
 int gzeof(gzFile file);
 
 
@@ -166,7 +166,8 @@ BZ_EXTERN int BZ_API(BZ2_bzRead) (
       int*    bzerror, 
       BZFILE* b, 
       void*   buf, 
-      int     len 
+	  int     len,
+	  _fsize64_t* bytesRead
    );
 
 #ifdef __cplusplus

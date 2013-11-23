@@ -18,6 +18,8 @@
 
 #include "../miniclib.h"
 
+_fsize64_t g_totalRead;
+
 #ifndef local
 #  define local static
 #endif

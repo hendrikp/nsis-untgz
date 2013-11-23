@@ -455,7 +455,7 @@ long readBlock(int cm, void *buffer, _fsize64_t *bytesBlockRead)
   {
 #ifdef ENABLE_BZ2
     case CM_BZ2:
-	  len = BZ2_bzRead(&bzerror, bzfile, buffer, BLOCKSIZE);
+	  len = BZ2_bzRead(&bzerror, bzfile, buffer, BLOCKSIZE, &bytesRead);
       break;
 #endif
 #ifdef ENABLE_LZMA
@@ -464,7 +464,7 @@ long readBlock(int cm, void *buffer, _fsize64_t *bytesBlockRead)
       break;
 #endif
     default: /* CM_NONE, CM_GZ */
-      len = gzread(infile, buffer, BLOCKSIZE);
+      len = gzread(infile, buffer, BLOCKSIZE, &bytesRead);
       break;
   }
 

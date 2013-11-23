@@ -6,7 +6,7 @@
 
 /* prototypes for our read function */
 typedef void * gzFile;
-int gzread(gzFile file, void * buf, unsigned len);
+int gzread(gzFile file, void * buf, unsigned len, _fsize64_t* bytesRead);
 
 _fsize64_t g_totalRead;
 

@@ -64,7 +64,7 @@
 
 #include "bz2.h"
 
-
+_fsize64_t g_totalRead;
 
 /*-- General stuff. --*/
 

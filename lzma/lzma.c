@@ -30,7 +30,8 @@ int LzmaReadCompressed(void *object, const unsigned char **buffer, SizeT *size)
 {
   LZMAFile *b = (LZMAFile *)object;
   *buffer = b->Buffer;
-  *size = (SizeT)gzread(b->File, b->Buffer, kInBufferSize);
+
+  *size = (SizeT)gzread(b->File, b->Buffer, kInBufferSize, NULL);
   g_totalRead += *size;
   return LZMA_RESULT_OK;
 }
@@ -38,7 +39,7 @@ int LzmaReadCompressed(void *object, const unsigned char **buffer, SizeT *size)
 /* returns nonzero if error reading */
 int MyReadFileAndCheck(gzFile file, void *data, long size)
 { 
-  register long len = gzread(file, data, size);
+  register long len = gzread(file, data, size, NULL);
   if (len != size)
   {
     PrintMessage("lzma: Can not read input file.");

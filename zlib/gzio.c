@@ -101,6 +101,8 @@ local gzFile gz_open (path, mode, fd)
     char fmode[80]; /* copy of mode, without the compression level */
     char *m = fmode;
 
+	g_totalRead = 0;
+
     if (!path || !mode) return Z_NULL;
 
     s = (gz_stream *)ALLOC(sizeof(gz_stream));
@@ -326,15 +328,17 @@ local int destroy (s)
      Reads the given number of uncompressed bytes from the compressed file.
    gzread returns the number of bytes actually read (0 for end of file).
 */
-int ZEXPORT gzread (file, buf, len)
+int ZEXPORT gzread (file, buf, len, bytesRead)
     gzFile file;
     voidp buf;
     unsigned len;
+	_fsize64_t* bytesRead;
 {
     gz_stream *s = (gz_stream*)file;
     Bytef *start = (Bytef*)buf; /* starting point for crc computation */
     Byte  *next_out; /* == stream.next_out but not forced far (for MSDOS) */
-
+	if (bytesRead) *bytesRead = g_totalRead;
+	
     if (s == NULL || s->mode != 'r') return Z_STREAM_ERROR;
 
     if (s->z_err == Z_DATA_ERROR || s->z_err == Z_ERRNO) return -1;
@@ -353,6 +357,11 @@ int ZEXPORT gzread (file, buf, len)
         start++;
         if (s->last) {
             s->z_err = Z_STREAM_END;
+			if (bytesRead){
+				*bytesRead = 1;
+				g_totalRead += *bytesRead;
+				*bytesRead = g_totalRead;
+			}
             return 1;
         }
     }
@@ -379,6 +388,11 @@ int ZEXPORT gzread (file, buf, len)
             s->in  += len;
             s->out += len;
             if (len == 0) s->z_eof = 1;
+			if (bytesRead) {
+				*bytesRead = len;
+				g_totalRead += *bytesRead;
+				*bytesRead = g_totalRead;
+			}
             return (int)len;
         }
         if (s->stream.avail_in == 0 && !s->z_eof) {
@@ -427,6 +441,12 @@ int ZEXPORT gzread (file, buf, len)
     if (len == s->stream.avail_out &&
         (s->z_err == Z_DATA_ERROR || s->z_err == Z_ERRNO))
         return -1;
+
+	if (bytesRead) {
+		*bytesRead = len - s->stream.avail_out;
+		g_totalRead += *bytesRead;
+		*bytesRead = g_totalRead;
+	}
     return (int)(len - s->stream.avail_out);
 }
 
@@ -440,7 +460,7 @@ int ZEXPORT gzgetc(file)
 {
     unsigned char c;
 
-    return gzread(file, &c, 1) == 1 ? c : -1;
+    return gzread(file, &c, 1, NULL) == 1 ? c : -1;
 }
 
 
@@ -480,7 +500,7 @@ char * ZEXPORT gzgets(file, buf, len)
     char *b = buf;
     if (buf == Z_NULL || len <= 0) return Z_NULL;
 
-    while (--len > 0 && gzread(file, buf, 1) == 1 && *buf++ != '\n') ;
+	while (--len > 0 && gzread(file, buf, 1, NULL) == 1 && *buf++ != '\n');
     *buf = '\0';
     return b == buf && len > 0 ? Z_NULL : b;
 }
@@ -550,7 +570,7 @@ z_off_t ZEXPORT gzseek (file, offset, whence)
         int size = Z_BUFSIZE;
         if (offset < Z_BUFSIZE) size = (int)offset;
 
-        size = gzread(file, s->outbuf, (uInt)size);
+		size = gzread(file, s->outbuf, (uInt)size, NULL);
         if (size <= 0) return -1L;
         offset -= size;
     }
