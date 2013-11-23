@@ -126,8 +126,11 @@ local gzFile gz_open (path, mode, fd)
     if (s->path == NULL) {
         return destroy(s), (gzFile)Z_NULL;
     }
-    //lstrcpyA(s->path, path); /* do this early for debugging */
+#ifndef UNICODE
+	strcpy(s->path, path); /* do this early for debugging */
+#else
     WideCharToMultiByte(CP_ACP, 0, path, strlen(path), s->path, strlen(path)+1, "?", NULL);
+#endif
 
     s->mode = '\0';
     do {

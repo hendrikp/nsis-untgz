@@ -173,6 +173,10 @@ FILE *_fdopen(int handle, const char *mode);
 #define _INC_EXCPT      /* don't allow VC8+SDK2003R2 to include MS clib */
 #define _INC_CTYPE
 #define __STRALIGN_H_
+#define _INC_CRTDEFS
+#define EXCEPTION_DISPOSITION int
+#include <sal.h>
+
 #include <windows.h>
 
 #endif /* _MINI_CRT_LIB_ */

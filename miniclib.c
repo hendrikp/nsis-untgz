@@ -74,12 +74,12 @@ char * strrchr(const char *str, int c)
 	return NULL;
 }
 
-WCHAR * tstrrchr(const WCHAR *str, int c)
+TCHAR * tstrrchr(const TCHAR *str, int c)
 {
-	const WCHAR *t = str + strlen(str);  /* assumes str is '\0' terminated */
+	const TCHAR *t = str + strlen(str);  /* assumes str is '\0' terminated */
 	while (t >=  str)
 	{
-		if (*t == (WCHAR)c) return (WCHAR *)t;
+		if (*t == (TCHAR)c) return (TCHAR *)t;
 		t--;
 	}
 
