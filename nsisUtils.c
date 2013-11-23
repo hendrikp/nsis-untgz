@@ -29,6 +29,8 @@ static unsigned int g_stringsize;
 static stack_t **g_stacktop;
 static TCHAR *g_variables;
 
+static WPARAM g_beginRange;
+static WPARAM g_endRange;
 
 #define EXDLL_INIT()           {  \
         g_stringsize=string_size; \
@@ -81,9 +83,9 @@ void pluginInit(HWND hwndParent, int string_size, TCHAR *variables, stack_t **st
 {
   g_hwndParent=hwndParent;
   g_hwndList = FindWindowEx(FindWindowEx(g_hwndParent,NULL,_T("#32770"),NULL),NULL,_T("SysListView32"),NULL);
+  g_hwndProgressBar = FindWindowEx(FindWindowEx(g_hwndParent, NULL, _T("#32770"), NULL), NULL, _T("msctls_progress32"), NULL);
   EXDLL_INIT();
 }
-
 
 /*
  * more printf like variant of below LogMessage from Tim (upon which it requires)
@@ -96,6 +98,39 @@ void _cdecl PrintMessage(const TCHAR *msg, ...)
   wvsprintf (buf, msg, argptr);
   va_end(argptr);
   DetailPrint(buf);
+}
+
+void _cdecl PrintProgressionBar(const _fsize64_t sofar, const _fsize64_t total)
+{
+	int position = 0;
+	int range = g_endRange - g_beginRange;
+	int i = 0;
+	int pos = 0;
+	_fsize64_t sofarscaled = 0;
+
+	// Manual multiplication (no crt routine present for this type)
+	for(i = 1; i <= range; ++i)
+	{
+		sofarscaled += sofar;
+	}
+
+	// Manual division (no crt routine present for this type)
+	while ( sofarscaled >= total )
+	{
+		sofarscaled -= total;
+		++pos;
+	}
+
+	if (total != 0)
+	{
+		position = g_beginRange + pos;
+	}
+	else
+	{
+		position = g_endRange;
+	}
+
+	SendMessage(g_hwndProgressBar, PBM_SETPOS, (WPARAM)position, 0);
 }
 
 /*
@@ -207,6 +242,14 @@ int getArgList(int *argCnt, TCHAR **argList[], TCHAR *cmdline)
 }
 /* End KJD's Functions */
 
+
+/* GB Set the limits of the progression for extraction */
+void InitProgressBarExtremities()
+{
+	g_beginRange = SendMessage(g_hwndProgressBar, PBM_GETPOS, 0, 0);
+	g_endRange = SendMessage(g_hwndProgressBar, PBM_GETRANGE, 0, 0);
+	g_endRange -= MulDiv(1, g_endRange - g_beginRange, 11); // We left some range to finish the install
+}
 
 
 /* 

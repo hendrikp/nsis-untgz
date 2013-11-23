@@ -67,3 +67,18 @@ int getFileType(const TCHAR *fname)
     return CM_GZ;
 }
 
+_fsize64_t getFileSize(const TCHAR* fname) {
+
+	WIN32_FIND_DATA data;
+	HANDLE h = FindFirstFile(fname, &data);
+	if (h == INVALID_HANDLE_VALUE)
+		return -1;
+
+	FindClose(h);
+
+	_LARGE_INTEGER conv;
+	conv.LowPart = data.nFileSizeLow;
+	conv.HighPart = data.nFileSizeHigh;
+
+	return conv.QuadPart;
+}

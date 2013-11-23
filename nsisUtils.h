@@ -47,11 +47,14 @@ typedef struct _stack_t {
 /* global variables */
 extern HWND g_hwndParent;
 extern HWND g_hwndList;
+extern HWND g_hwndProgressBar;
 
 extern unsigned int g_stringsize;
 extern stack_t **g_stacktop;
 extern TCHAR *g_variables;
 
+extern WPARAM g_beginRange;
+extern WPARAM g_endRange;
 
 /* For page showing plug-ins */
 #define WM_NOTIFY_OUTER_NEXT (WM_USER+0x8)
@@ -139,6 +142,10 @@ void DetailPrint(const TCHAR *pStr);
  * more printf like variant of below LogMessage from Tim (upon which it requires)
  */
 void _cdecl PrintMessage(const TCHAR *msg, ...);
+
+void InitProgressBarExtremities();
+
+void _cdecl PrintProgressionBar(const _fsize64_t sofar, const _fsize64_t total);
 
 /*
  * Sets the status text

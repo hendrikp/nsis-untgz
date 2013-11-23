@@ -21,6 +21,7 @@ void mCRTinit(void);
 
 typedef unsigned long time_t;
 typedef unsigned size_t;
+typedef unsigned __int64 _fsize64_t;
 
 extern int errno;
 

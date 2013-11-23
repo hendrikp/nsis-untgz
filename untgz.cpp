@@ -116,7 +116,7 @@ HINSTANCE g_hInstance;
 
 HWND g_hwndParent;
 HWND g_hwndList;
-
+HWND g_hwndProgressBar;
 
 // DLL entry point
 BOOL WINAPI _DllMainCRTStartup(HANDLE _hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
@@ -195,7 +195,7 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE _hModule, DWORD ul_reason_for_call, LPVOID
 
 void argParse(HWND hwndParent, int string_size, TCHAR *variables, stack_t **stacktop, 
               TCHAR *cmd, TCHAR *cmdline, gzFile *tgzFile, int *compressionMethod,
-              int *junkPaths, enum KeepMode *keep, TCHAR *basePath, int *failOnHardLinks)
+			  int *junkPaths, enum KeepMode *keep, TCHAR *basePath, int *failOnHardLinks, _fsize64_t *fileSize)
 {
   TCHAR buf[1024];     /* used for argument processor or other temp buffer */
   TCHAR iPath[1024];   /* initial (base) directory for extraction */
@@ -222,7 +222,7 @@ void argParse(HWND hwndParent, int string_size, TCHAR *variables, stack_t **stac
   if (basePath != NULL)
     *basePath = '\0';   /* default to current directory ""     */
   *iPath = '\0';        /* default to current directory ""     */
-
+  *fileSize = 0;
 
   /* get 1st optional argument or the tarball itself */
   poparg1(buf, ERR_NO_TARBALL);
@@ -282,6 +282,9 @@ void argParse(HWND hwndParent, int string_size, TCHAR *variables, stack_t **stac
   _tcscat(cmdline, buf);  
   _tcscat(cmdline, _T("' "));
 
+  /* determine file size */
+  *fileSize = getFileSize(_T2A(buf));
+
   /* if auto type specified then determine type */
   if (*compressionMethod == CM_AUTO)
     *compressionMethod = getFileType(buf);
@@ -334,6 +337,7 @@ void doExtraction(enum ExtractMode mode, HWND hwndParent, int string_size, TCHAR
   TCHAR cmdline[1024];     /* just used to display to user */
   int junkPaths;          /* default to extracting with paths -- highly insecure */
   int compressionMethod;  /* gzip or other compressed tar file */
+  _fsize64_t fileSize;
   int failOnHardLinks;
   enum KeepMode keep;     /* overwrite mode */
   gzFile tgzFile = NULL;  /* the opened tarball (assuming argParse returns successfully) */
@@ -345,7 +349,7 @@ void doExtraction(enum ExtractMode mode, HWND hwndParent, int string_size, TCHAR
 
   /* do common stuff including parsing arguments up to filename to extract */
   argParse(hwndParent, string_size, variables, stacktop, 
-           funcName[mode], cmdline, &tgzFile, &compressionMethod, &junkPaths, &keep, NULL, &failOnHardLinks);
+           funcName[mode], cmdline, &tgzFile, &compressionMethod, &junkPaths, &keep, NULL, &failOnHardLinks, &fileSize);
 
   /* check if everything up to now processed ok, exit if not */
   if (_tcscmp(getuservariable(INST_R0), ERR_SUCCESS) != 0) return;
@@ -420,7 +424,7 @@ void doExtraction(enum ExtractMode mode, HWND hwndParent, int string_size, TCHAR
   PrintMessage(cmdline);
 
   /* actually perform the extraction */
-  if ((result = tgz_extract(tgzFile, compressionMethod, junkPaths, keep, iCnt, iList, xCnt, xList, failOnHardLinks)) < 0)
+  if ((result = tgz_extract(tgzFile, compressionMethod, junkPaths, keep, iCnt, iList, xCnt, xList, failOnHardLinks, fileSize)) < 0)
   {
 	switch (result) 
 	{

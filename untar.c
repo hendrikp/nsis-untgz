@@ -447,19 +447,20 @@ void cm_cleanup(int cm)
 
 /* Reads in a single TAR block
  */
-long readBlock(int cm, void *buffer)
+long readBlock(int cm, void *buffer, _fsize64_t *bytesBlockRead)
 {
   long len = -1;
+  _fsize64_t bytesRead = 0;
   switch (cm)
   {
 #ifdef ENABLE_BZ2
     case CM_BZ2:
-	len = BZ2_bzRead(&bzerror, bzfile, buffer, BLOCKSIZE);
+	  len = BZ2_bzRead(&bzerror, bzfile, buffer, BLOCKSIZE);
       break;
 #endif
 #ifdef ENABLE_LZMA
     case CM_LZMA:
-      len = lzma_read(lzmaFile, buffer, BLOCKSIZE);
+	  len = lzma_read(lzmaFile, buffer, BLOCKSIZE, &bytesRead);
       break;
 #endif
     default: /* CM_NONE, CM_GZ */
@@ -485,6 +486,8 @@ long readBlock(int cm, void *buffer)
     return -1;
   }
 
+  *bytesBlockRead = bytesRead;
+
   return len; /* success */
 }
 
@@ -506,7 +509,7 @@ long readBlock(int cm, void *buffer)
  *   -2 means error extracting file from tarball
  *   -3 means error creating hard link
  */
-int tgz_extract(gzFile in, int cm, int junkPaths, enum KeepMode keep, int iCnt, TCHAR *iList[], int xCnt, TCHAR *xList[], int failOnHardLinks)
+int tgz_extract(gzFile in, int cm, int junkPaths, enum KeepMode keep, int iCnt, TCHAR *iList[], int xCnt, TCHAR *xList[], int failOnHardLinks, _fsize64_t totalSize)
 {
   int           getheader = 1;    /* assume initial input has a tar header */
   HANDLE        outfile = INVALID_HANDLE_VALUE;
@@ -515,6 +518,11 @@ int tgz_extract(gzFile in, int cm, int junkPaths, enum KeepMode keep, int iCnt, 
   unsigned long remaining;
   TCHAR          fname[BLOCKSIZE]; /* must be >= BLOCKSIZE bytes */
   time_t        tartime;
+
+  _fsize64_t bytesReadSofar = 0;
+  _fsize64_t bytesReadThisTime = 0;
+
+  InitProgressBarExtremities();
 
   /* do any prep work for extracting from compressed TAR file */
   if (cm_init(in, cm))
@@ -526,8 +534,11 @@ int tgz_extract(gzFile in, int cm, int junkPaths, enum KeepMode keep, int iCnt, 
   
   while (1)
   {
-    if (readBlock(cm, &buffer) < 0) return -1;
-      
+	  if (readBlock(cm, &buffer, &bytesReadThisTime) < 0)
+		  return -1;
+
+	  bytesReadSofar = bytesReadThisTime;
+
     /*
      * If we have to get a tar header
      */
@@ -702,6 +713,7 @@ int tgz_extract(gzFile in, int cm, int junkPaths, enum KeepMode keep, int iCnt, 
 
  	            /* Inform user of current extraction action (writing, skipping file XYZ) */
 	            PrintMessage(_T("%s%s"), szMsg, fname);
+				PrintProgressionBar(bytesReadSofar, totalSize);
 				}
 	          }
 	      }
@@ -733,7 +745,7 @@ int tgz_extract(gzFile in, int cm, int junkPaths, enum KeepMode keep, int iCnt, 
 		case GNUTYPE_LONGNAME:
 		{
 	      remaining = getoct(buffer.header.size,12);
-	      if (readBlock(cm, fname) < 0) return -1;
+		  if (readBlock(cm, fname, &bytesReadThisTime) < 0) return -1;
 	      fname[BLOCKSIZE-1] = '\0';
 	      if ((remaining >= BLOCKSIZE) || ((unsigned)strlen(fname) > remaining))
 	      {

@@ -43,7 +43,7 @@ enum KeepMode {
 };
 
 /* actual extraction routine */
-int tgz_extract(gzFile tgzFile, int cm, int junkPaths, enum KeepMode keep, int iCnt, TCHAR *iList[], int xCnt, TCHAR *xList[], int failOnHardLinks);
+int tgz_extract(gzFile tgzFile, int cm, int junkPaths, enum KeepMode keep, int iCnt, TCHAR *iList[], int xCnt, TCHAR *xList[], int failOnHardLinks, _fsize64_t totalSize);
 
 /* recursive make directory */
 /* abort if you get an ENOENT errno somewhere in the middle */
@@ -94,7 +94,7 @@ int valid_checksum(struct tar_header *header);
 
 /* uses filename & file contents and returns best guess of file type CM_* */
 int getFileType(const TCHAR *fname);
-
+_fsize64_t getFileSize(const TCHAR *fname);
 
 /* !!!USER SUPPLIED!!! */
 /* wrap around whatever you want to send error messages to user, c function */

@@ -31,6 +31,7 @@ int LzmaReadCompressed(void *object, const unsigned char **buffer, SizeT *size)
   LZMAFile *b = (LZMAFile *)object;
   *buffer = b->Buffer;
   *size = (SizeT)gzread(b->File, b->Buffer, kInBufferSize);
+  g_totalRead += *size;
   return LZMA_RESULT_OK;
 }
 
@@ -62,6 +63,9 @@ Offset Size Description
 int lzma_init(gzFile infile, struct LZMAFile **lzmaFile)
 {
   LZMAFile *inBuffer;
+
+  g_totalRead = 0;
+  
   *lzmaFile = inBuffer = (LZMAFile *)malloc(sizeof(struct LZMAFile));
   if (inBuffer == NULL) return -1;
 
@@ -122,7 +126,8 @@ void lzma_cleanup(struct LZMAFile *lzmaFile)
 
 long lzma_read(struct LZMAFile *lzmaFile,
                unsigned char *buffer,
-               unsigned len)
+               unsigned len,
+			   _fsize64_t* bytesRead)
 {
   SizeT outProcessed;
   SizeT outAvail = len;
@@ -134,6 +139,9 @@ long lzma_read(struct LZMAFile *lzmaFile,
   res = LzmaDecode(&(lzmaFile->state),
         &(lzmaFile->InCallback),
         buffer, outAvail, &outProcessed);
+
+  *bytesRead = g_totalRead;
+
   if (res != 0)
   {
     PrintMessage("lzma_read: Decoding error (%d)", res);
